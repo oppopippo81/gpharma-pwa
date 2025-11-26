@@ -81,7 +81,7 @@ export default function Home() {
           {/* BANNER PROMOZIONALE (Senza scritte sopra, si vede la tua grafica) */}
           <div className="w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-white">
             <img 
-              src="/banner.jpeg" 
+              src="/banner.jpg" 
               alt="Promo" 
               className="w-full h-full object-cover object-center" 
             />
@@ -175,6 +175,15 @@ export default function Home() {
         <div className="bg-white p-6 rounded-3xl shadow-xl mb-8 w-full flex justify-center">
           <img src="/logo.jpg" alt="gpharma" className="h-16 w-auto object-contain" />
         </div>
+        
+          {/* BANNER PROMOZIONALE VISIBILE AGLI OSPITI */}
+          <div className="w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-white mb-6">
+            <img
+              src="/banner.jpg"
+              alt="Promo"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
         
         <h1 className="text-3xl font-bold text-gray-800 mb-2">gpharma</h1>
         <p className="text-gray-500 mb-10 text-center px-4">
