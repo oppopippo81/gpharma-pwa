@@ -81,7 +81,7 @@ export default function Home() {
           {/* BANNER PROMOZIONALE (Senza scritte sopra, si vede la tua grafica) */}
           <div className="w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-white">
             <img 
-              src="/banner.jpg" 
+              src="/banner.jpeg" 
               alt="Promo" 
               className="w-full h-full object-cover object-center" 
             />
