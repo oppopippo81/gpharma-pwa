@@ -45,6 +45,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
       <div className="w-full max-w-sm rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
+        <div className="flex justify-center mb-8">
+          <img src="/logo.jpg" alt="Logo" className="h-14 w-auto object-contain" />
+        </div>
         <h2 className="mb-6 text-center text-2xl font-bold text-green-700">Accedi a gpharma</h2>
         
         {error && (
