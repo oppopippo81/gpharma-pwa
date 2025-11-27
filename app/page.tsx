@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MapPin, LogOut, PlusCircle, Search, Package, Loader2 } from 'lucide-react'
+import { MapPin, LogOut, PlusCircle, Search, Package, Loader2, Star } from 'lucide-react'
 
 type Order = {
   id: string
@@ -17,11 +17,8 @@ export default function Home() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<Order[]>([])
-  
-  // --- NUOVI STATI PER IL GPS ---
   const [gpsLocation, setGpsLocation] = useState<string | null>(null)
   const [findingLocation, setFindingLocation] = useState(false)
-  
   const router = useRouter()
 
   useEffect(() => {
@@ -47,30 +44,25 @@ export default function Home() {
     router.refresh()
   }
 
-  // --- FUNZIONE GPS VERA (Sostituisce la Demo) ---
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
       alert('Il tuo dispositivo non supporta il GPS')
       return
     }
-
     setFindingLocation(true)
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords
         setGpsLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
         setFindingLocation(false)
-        
-        // Apre Google Maps in una nuova scheda per conferma
         window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, '_blank')
       },
       (error) => {
         console.error(error)
-        alert('Impossibile trovare la posizione. Assicurati di aver dato i permessi al browser.')
+        alert('Impossibile trovare la posizione. Controlla i permessi del browser.')
         setFindingLocation(false)
       },
-      { enableHighAccuracy: true } // Forza la precisione massima
+      { enableHighAccuracy: true }
     )
   }
 
@@ -109,7 +101,6 @@ export default function Home() {
             <img src="/banner.jpg" alt="Promo" className="w-full h-full object-cover object-center" />
           </div>
 
-          {/* BOX POSIZIONE GPS */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-green-100 flex items-center justify-between">
             <div>
               <h2 className="font-bold text-gray-800">Dove ti trovi?</h2>
@@ -119,9 +110,8 @@ export default function Home() {
                 <p className="text-xs text-gray-500">Trova farmacie vicine</p>
               )}
             </div>
-            
             <button 
-              onClick={handleGetLocation} // <--- Ora chiama la funzione vera!
+              onClick={handleGetLocation}
               disabled={findingLocation}
               className={`p-3 rounded-full shadow-lg transition flex items-center justify-center ${
                 findingLocation ? 'bg-gray-200 text-gray-500' : 'bg-green-600 text-white hover:bg-green-700'
@@ -146,6 +136,7 @@ export default function Home() {
             </button>
           </div>
 
+          {/* LISTA ORDINI */}
           <div>
             <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
               <Package size={18} className="text-gray-400" />
@@ -180,6 +171,21 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* NUOVO BLOCCO RECENSIONI GOOGLE */}
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-2xl border border-yellow-100 text-center shadow-sm">
+            <h3 className="font-bold text-gray-800 mb-1 text-lg">Ti piace gpharma?</h3>
+            <p className="text-sm text-gray-500 mb-4">Lasciaci una recensione, ci aiuta moltissimo! ⭐</p>
+            
+            <button 
+              onClick={() => window.open('https://www.google.com/maps', '_blank')} // <--- Qui metterai il link vero
+              className="bg-white text-gray-800 px-6 py-3 rounded-full font-bold shadow-sm border border-gray-200 flex items-center justify-center gap-2 mx-auto hover:bg-yellow-50 transition transform hover:scale-105"
+            >
+              <Star size={20} className="text-yellow-500 fill-yellow-500" />
+              Lascia 5 Stelle
+            </button>
+          </div>
+
         </div>
       </main>
     )
@@ -209,7 +215,7 @@ export default function Home() {
         </Link>
         <p className="mt-8 text-xs text-gray-400 flex items-center gap-2">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          Web App Attiva v1.5
+          Web App Attiva v1.6
         </p>
       </div>
     </main>
