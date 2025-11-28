@@ -27,15 +27,20 @@ export default function LoginPage() {
   }
 
   const handleSignUp = async () => {
-    // --- INIZIO MODIFICA: BLOCCO DI SICUREZZA ---
+    // Controllo campi vuoti
     if (!email || !password) {
       alert("Per favore inserisci email e password!")
-      return // Questo STOPPA tutto se i campi sono vuoti
+      return
     }
-    // --- FINE MODIFICA ---
 
     setLoading(true)
-    // ... il resto del codice rimane uguale ...
+    setError(null)
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    })
+
     if (error) {
       setError(error.message)
       setLoading(false)
@@ -47,24 +52,20 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-      {/* Box Login: Aggiunto overflow-hidden per tagliare bene il banner in alto */}
       <div className="w-full max-w-sm rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
         
-        {/* --- NUOVO: BANNER COPERTINA --- */}
+        {/* Banner Copertina */}
         <div className="h-32 w-full relative bg-gray-100">
           <img 
             src="/banner.jpg" 
             alt="Copertina" 
             className="h-full w-full object-cover" 
           />
-          {/* Sfumatura scura leggera sopra il banner per stile */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
         </div>
 
-        {/* Contenuto del form (con padding) */}
         <div className="p-8">
-          
-          {/* LOGO */}
+          {/* Logo */}
           <div className="flex justify-center -mt-12 mb-6 relative z-10">
             <div className="bg-white p-2 rounded-full shadow-md">
               <img src="/logo.jpg" alt="Logo" className="h-16 w-16 object-contain rounded-full bg-white" />
