@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Package, Clock, CheckCircle, Truck, ExternalLink, XCircle, AlertCircle } from 'lucide-react'
+import { Package, Clock, CheckCircle, Truck, ExternalLink, XCircle, AlertCircle, Loader2 } from 'lucide-react'
 
 type Order = {
   id: string
@@ -16,8 +16,12 @@ type Order = {
 export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  // Nuovo stato per l'animazione del bottone
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (showLoadingAnimation = false) => {
+    if (showLoadingAnimation) setIsRefreshing(true)
+    
     const { data, error } = await supabase
       .from('orders')
       .select('*')
@@ -27,11 +31,18 @@ export default function AdminPage() {
     else setOrders(data || [])
     
     setLoading(false)
+
+    // Se abbiamo chiesto l'animazione, aspettiamo un po' prima di spegnerla
+    if (showLoadingAnimation) {
+      setTimeout(() => {
+        setIsRefreshing(false)
+      }, 800) // 800ms di ritardo estetico
+    }
   }
 
   useEffect(() => {
-    fetchOrders()
-    const interval = setInterval(fetchOrders, 10000)
+    fetchOrders(false) // Al primo avvio non serve l'animazione sul bottone
+    const interval = setInterval(() => fetchOrders(false), 10000)
     return () => clearInterval(interval)
   }, [])
 
@@ -45,7 +56,7 @@ export default function AdminPage() {
 
     if (error) {
       alert('Errore Database: ' + error.message)
-      fetchOrders()
+      fetchOrders(false)
     }
   }
 
@@ -90,8 +101,23 @@ export default function AdminPage() {
             <Package className="text-green-600" />
             Dashboard Farmacia
           </h1>
-          <button onClick={fetchOrders} className="bg-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-600">
-            Aggiorna Lista
+          
+          {/* BOTTONE CON FEEDBACK VISIVO */}
+          <button 
+            onClick={() => fetchOrders(true)} // Passiamo true per attivare l'animazione
+            disabled={isRefreshing}
+            className="bg-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-600 flex items-center gap-2 transition-all active:scale-95"
+          >
+            {isRefreshing ? (
+              <>
+                <Loader2 size={16} className="animate-spin text-green-600" />
+                Aggiornamento...
+              </>
+            ) : (
+              <>
+                Aggiorna Lista
+              </>
+            )}
           </button>
         </div>
 
@@ -100,7 +126,6 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => {
-              // LOGICA PER ABILITARE/DISABILITARE I BOTTONI
               const isPending = order.status === 'pending';
               const isAccepted = order.status === 'accepted';
               const isReady = order.status === 'ready';
@@ -143,10 +168,8 @@ export default function AdminPage() {
                     )}
                   </div>
 
-                  {/* Pulsanti Azione CON LOGICA INTELLIGENTE */}
+                  {/* Pulsanti Azione */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-gray-100">
-                    
-                    {/* RIFIUTA: Attivo solo se non è già finito */}
                     <button 
                       disabled={isFinal}
                       onClick={() => updateStatus(order.id, 'rejected')} 
@@ -155,7 +178,6 @@ export default function AdminPage() {
                       <XCircle size={16} /> Rifiuta
                     </button>
 
-                    {/* ACCETTA: Attivo solo se è In Attesa */}
                     <button 
                       disabled={!isPending}
                       onClick={() => updateStatus(order.id, 'accepted')} 
@@ -164,7 +186,6 @@ export default function AdminPage() {
                       <Clock size={16} /> Accetta
                     </button>
 
-                    {/* CHIAMA RIDER: Attivo solo se è Accettato */}
                     <button 
                       disabled={!isAccepted}
                       onClick={() => updateStatus(order.id, 'ready')} 
@@ -173,7 +194,6 @@ export default function AdminPage() {
                       <Truck size={16} /> Chiama Rider
                     </button>
 
-                    {/* CONSEGNATO: Attivo solo se Rider è partito */}
                     <button 
                       disabled={!isReady}
                       onClick={() => updateStatus(order.id, 'delivered')} 
