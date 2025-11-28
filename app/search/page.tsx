@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
 
 // Definiamo come è fatto un prodotto
@@ -18,6 +18,7 @@ type Product = {
 export default function SearchPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   // Scarica i dati appena apri la pagina
   useEffect(() => {
@@ -36,17 +37,22 @@ export default function SearchPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white p-4 shadow-sm flex items-center gap-4">
-        <Link href="/" className="p-2 hover:bg-gray-100 rounded-full">
+    // AGGIUNTO pt-14 per evitare la tacca dell'iPhone
+    <div className="min-h-screen bg-gray-50 pb-20 pt-14">
+      
+      {/* Header Fisso con tasto Indietro */}
+      <div className="fixed top-0 left-0 right-0 bg-white p-4 shadow-sm flex items-center gap-4 z-50 pt-14">
+        <button 
+          onClick={() => router.push('/')} // Torna alla Home sicuro
+          className="p-2 hover:bg-gray-100 rounded-full border border-gray-100"
+        >
           <ArrowLeft size={24} className="text-gray-600" />
-        </Link>
+        </button>
         <h1 className="text-xl font-bold text-gray-800">Cerca Farmaco</h1>
       </div>
 
-      {/* Griglia Prodotti */}
-      <div className="p-4 grid grid-cols-1 gap-4">
+      {/* Griglia Prodotti (Aggiunto margine in alto per non finire sotto l'header) */}
+      <div className="p-4 grid grid-cols-1 gap-4 mt-4">
         {loading ? (
           <p className="text-center text-gray-400 mt-10">Caricamento catalogo...</p>
         ) : (

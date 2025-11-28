@@ -23,18 +23,24 @@ export default function UploadPage() {
     
     setUploading(true)
     
-    // 1. Ottieni l'utente corrente
+    // 1. Ottieni l'utente corrente (METODO CORRETTO E SEMPLICE)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return alert('Devi essere loggato!')
+    
+    if (!user) {
+      alert('Devi essere loggato!')
+      setUploading(false)
+      return
+    }
 
-    // 2. Crea un nome unico per il file (es: ricetta-12345.jpg)
-    // Usiamo Date.now() per evitare conflitti se due file hanno lo stesso nome
-    const fileName = `ricetta-${Date.now()}-${file.name.replace(/\s/g, '_')}`
+    // 2. Crea un nome unico per il file
+    // Rimuoviamo spazi e caratteri strani dal nome file
+    const safeFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
+    const fileName = `ricetta-${Date.now()}-${safeFileName}`
     
     // 3. Carica su Supabase Storage (Bucket: prescriptions)
     const { data, error: uploadError } = await supabase
       .storage
-      .from('prescriptions') // <--- VERIFICA CHE SU SUPABASE SI CHIAMI COSÌ
+      .from('prescriptions')
       .upload(fileName, file)
 
     if (uploadError) {
@@ -44,15 +50,15 @@ export default function UploadPage() {
       return
     }
 
-    // 4. Salva l'ordine nel Database (Tabella: orders)
+    // 4. Salva l'ordine nel Database
     const { error: dbError } = await supabase
       .from('orders')
       .insert({
         user_id: user.id,
-        status: 'pending', // Stato iniziale: In attesa
-        prescription_url: data.path, // Salviamo il percorso del file
+        status: 'pending',
+        prescription_url: data.path,
         notes: 'Ricetta caricata via App',
-        delivery_address: 'Indirizzo da profilo' // Placeholder per ora
+        delivery_address: 'Indirizzo da profilo'
       })
 
     if (dbError) {
@@ -67,25 +73,28 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
+    // Padding top aumentato per evitare la "tacca" dell'iPhone
+    <div className="min-h-screen bg-gray-50 p-6 pt-14 flex flex-col items-center">
+      
       {/* Header con pulsante Indietro */}
-      <div className="w-full flex items-center mb-8">
-        <button onClick={() => router.back()} className="p-2 hover:bg-gray-200 rounded-full">
+      <div className="w-full flex items-center mb-8 relative z-50">
+        <button 
+          onClick={() => router.push('/')} // Torna alla Home
+          className="p-3 bg-white hover:bg-gray-200 rounded-full shadow-sm border border-gray-100"
+        >
           <ArrowLeft size={24} className="text-gray-700" />
         </button>
         <h1 className="text-xl font-bold ml-4 text-gray-800">Carica Ricetta</h1>
       </div>
 
       {/* Area Upload */}
-      <div className="w-full max-w-md bg-white rounded-2xl p-8 shadow-sm border-2 border-dashed border-green-300 flex flex-col items-center text-center">
+      <div className="w-full max-w-md bg-white rounded-2xl p-8 shadow-sm border-2 border-dashed border-green-300 flex flex-col items-center text-center mt-4">
         
         {file ? (
-          // SE C'È UN FILE: Mostra il nome
           <div className="text-green-600 font-medium mb-4 break-all">
             📄 {file.name}
           </div>
         ) : (
-          // SE NON C'È FILE: Mostra istruzioni
           <>
             <div className="bg-green-50 p-4 rounded-full mb-4">
               <Camera size={40} className="text-green-600" />
@@ -96,13 +105,12 @@ export default function UploadPage() {
           </>
         )}
 
-        {/* Bottone di selezione file (nascosto ma attivo) */}
         <label className="bg-green-600 text-white py-3 px-6 rounded-xl font-bold cursor-pointer hover:bg-green-700 transition w-full block">
           {file ? 'Cambia Foto' : 'Scatta / Carica Foto'}
           <input 
             type="file" 
             accept="image/*,application/pdf" 
-            capture="environment" // Apre la fotocamera posteriore su mobile
+            capture="environment"
             className="hidden" 
             onChange={handleFileChange}
           />

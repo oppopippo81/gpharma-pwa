@@ -27,12 +27,15 @@ export default function LoginPage() {
   }
 
   const handleSignUp = async () => {
+    // --- INIZIO MODIFICA: BLOCCO DI SICUREZZA ---
+    if (!email || !password) {
+      alert("Per favore inserisci email e password!")
+      return // Questo STOPPA tutto se i campi sono vuoti
+    }
+    // --- FINE MODIFICA ---
+
     setLoading(true)
-    setError(null)
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    // ... il resto del codice rimane uguale ...
     if (error) {
       setError(error.message)
       setLoading(false)

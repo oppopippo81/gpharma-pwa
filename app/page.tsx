@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { MapPin, LogOut, PlusCircle, Search, Package, Loader2, Star } from 'lucide-react'
 
+// Tipo per gli ordini
 type Order = {
   id: string
   created_at: string
@@ -17,20 +18,28 @@ export default function Home() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<Order[]>([])
+  
+  // Stati per il GPS
   const [gpsLocation, setGpsLocation] = useState<string | null>(null)
   const [findingLocation, setFindingLocation] = useState(false)
+  
   const router = useRouter()
 
+  // 1. All'avvio: Controlla utente e scarica ordini
   useEffect(() => {
     const initData = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      
       if (session) {
         setUser(session.user)
+        
+        // Scarica gli ordini di questo utente
         const { data: ordersData } = await supabase
           .from('orders')
           .select('*')
           .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false })
+          .order('created_at', { ascending: false }) // Dal più recente
+          
         if (ordersData) setOrders(ordersData)
       }
       setLoading(false)
@@ -38,23 +47,30 @@ export default function Home() {
     initData()
   }, [])
 
+  // 2. Logout completo
   const handleLogout = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setOrders([])
     router.refresh()
   }
 
+  // 3. Geolocalizzazione Reale
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
       alert('Il tuo dispositivo non supporta il GPS')
       return
     }
+
     setFindingLocation(true)
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords
         setGpsLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
         setFindingLocation(false)
+        
+        // Apre Google Maps per conferma
         window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, '_blank')
       },
       (error) => {
@@ -66,6 +82,7 @@ export default function Home() {
     )
   }
 
+  // 4. Etichette colorate per lo stato ordine
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending': return { label: 'In Attesa', color: 'bg-yellow-100 text-yellow-800' }
@@ -77,13 +94,16 @@ export default function Home() {
     }
   }
 
+  // Vista Caricamento
   if (loading) return <div className="flex h-screen items-center justify-center text-green-600 font-bold">Caricamento gpharma...</div>
 
-  // --- UTENTE LOGGATO ---
+  // --- VISTA DASHBOARD (UTENTE LOGGATO) ---
   if (user) {
     return (
       <main className="min-h-screen bg-gray-50 pb-20">
-        <div className="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
+        
+        {/* Header con Logo */}
+        <div className="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-10 pt-12 sm:pt-4">
           <div className="flex items-center gap-3">
             <img src="/logo.jpg" alt="Logo" className="h-10 w-auto object-contain" />
             <div className="hidden sm:block"> 
@@ -97,10 +117,13 @@ export default function Home() {
         </div>
 
         <div className="p-4 space-y-6">
+          
+          {/* Banner Promo */}
           <div className="w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-white relative">
             <img src="/banner.jpg" alt="Promo" className="w-full h-full object-cover object-center" />
           </div>
 
+          {/* Box GPS */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-green-100 flex items-center justify-between">
             <div>
               <h2 className="font-bold text-gray-800">Dove ti trovi?</h2>
@@ -121,14 +144,22 @@ export default function Home() {
             </button>
           </div>
 
+          {/* Pulsanti Azione */}
           <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => router.push('/search')} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center gap-3 hover:border-green-500 transition group">
+            <button 
+              onClick={() => router.push('/search')}
+              className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center gap-3 hover:border-green-500 transition group"
+            >
               <div className="bg-blue-50 p-4 rounded-full text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
                 <Search size={24} />
               </div>
               <span className="font-bold text-sm text-gray-700">Cerca Farmaco</span>
             </button>
-            <button onClick={() => router.push('/upload')} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center gap-3 hover:border-green-500 transition group">
+
+            <button 
+              onClick={() => router.push('/upload')}
+              className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center gap-3 hover:border-green-500 transition group"
+            >
               <div className="bg-orange-50 p-4 rounded-full text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition">
                 <PlusCircle size={24} />
               </div>
@@ -136,12 +167,13 @@ export default function Home() {
             </button>
           </div>
 
-          {/* LISTA ORDINI */}
+          {/* Lista Ordini */}
           <div>
             <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
               <Package size={18} className="text-gray-400" />
               I tuoi ordini
             </h3>
+            
             {orders.length === 0 ? (
               <div className="bg-white p-8 rounded-xl border border-dashed border-gray-200 text-center">
                 <Package className="w-12 h-12 mx-auto mb-3 text-gray-200" />
@@ -172,13 +204,13 @@ export default function Home() {
             )}
           </div>
 
-          {/* NUOVO BLOCCO RECENSIONI GOOGLE */}
+          {/* Box Recensioni Google */}
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-2xl border border-yellow-100 text-center shadow-sm">
             <h3 className="font-bold text-gray-800 mb-1 text-lg">Ti piace gpharma?</h3>
             <p className="text-sm text-gray-500 mb-4">Lasciaci una recensione, ci aiuta moltissimo! ⭐</p>
             
             <button 
-              onClick={() => window.open('https://www.google.com/maps', '_blank')} // <--- Qui metterai il link vero
+              onClick={() => window.open('https://g.page/r/example', '_blank')} // Metterai qui il link vero
               className="bg-white text-gray-800 px-6 py-3 rounded-full font-bold shadow-sm border border-gray-200 flex items-center justify-center gap-2 mx-auto hover:bg-yellow-50 transition transform hover:scale-105"
             >
               <Star size={20} className="text-yellow-500 fill-yellow-500" />
@@ -191,12 +223,16 @@ export default function Home() {
     )
   }
 
-  // --- VISTA OSPITE ---
+  // --- VISTA OSPITE (LOGIN/LANDING) ---
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white relative overflow-hidden">
+      
+      {/* Sfondo decorativo */}
       <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-green-50 to-white z-0"></div>
 
       <div className="z-10 flex flex-col items-center w-full max-w-sm">
+        
+        {/* Banner + Logo Ospite */}
         <div className="w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-xl mb-6 border border-white">
           <img src="/banner.jpg" alt="Promo" className="w-full h-full object-cover" />
         </div>
@@ -213,9 +249,10 @@ export default function Home() {
         <Link href="/login" className="w-full bg-green-600 text-white text-center py-4 rounded-2xl font-bold shadow-lg shadow-green-200 hover:bg-green-700 hover:scale-[1.02] transition transform duration-200 flex items-center justify-center gap-2">
           Inizia Subito
         </Link>
+        
         <p className="mt-8 text-xs text-gray-400 flex items-center gap-2">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          Web App Attiva v1.6
+          Web App Attiva v2.0
         </p>
       </div>
     </main>
